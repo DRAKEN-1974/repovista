@@ -1,5 +1,6 @@
 import httpx
 import os
+import asyncio
 
 GITHUB_API_URL = "https://api.github.com"
 
@@ -10,10 +11,24 @@ def get_auth_headers():
         headers["Authorization"] = f"Bearer {token}"
     return headers
 
+async def github_api_request(path: str, params: dict = None):
+    """
+    Make an authenticated GET request to the GitHub API.
+    :param path: API path, e.g. '/repos/owner/repo'
+    :param params: Optional dictionary of query parameters
+    :return: JSON response
+    """
+    headers = get_auth_headers()
+    url = f"{GITHUB_API_URL}{path}" if path.startswith("/") else f"{GITHUB_API_URL}/{path}"
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.get(url, headers=headers, params=params)
+        response.raise_for_status()
+        return response.json()
+
 async def fetch_repo_info(owner: str, repo_name: str):
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo_name}"
     headers = get_auth_headers()
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30) as client:
         response = await client.get(url, headers=headers)
         if response.status_code == 200:
             return response.json()
@@ -22,7 +37,7 @@ async def fetch_repo_info(owner: str, repo_name: str):
 async def fetch_contributors(owner: str, repo_name: str):
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/contributors"
     headers = get_auth_headers()
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30) as client:
         response = await client.get(url, headers=headers)
         if response.status_code == 200:
             return response.json()
@@ -31,7 +46,7 @@ async def fetch_contributors(owner: str, repo_name: str):
 async def fetch_languages(owner: str, repo_name: str):
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/languages"
     headers = get_auth_headers()
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30) as client:
         response = await client.get(url, headers=headers)
         if response.status_code == 200:
             return response.json()
@@ -41,8 +56,32 @@ async def fetch_issues(owner: str, repo_name: str, state: str = "open"):
     url = f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/issues"
     headers = get_auth_headers()
     params = {"state": state}
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30) as client:
         response = await client.get(url, headers=headers, params=params)
         if response.status_code == 200:
             return response.json()
+        return []
+
+async def fetch_contributor_stats(owner: str, repo_name: str):
+    url = f"{GITHUB_API_URL}/repos/{owner}/{repo_name}/stats/contributors"
+    headers = get_auth_headers()
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.get(url, headers=headers)
+        retries = 0
+        while response.status_code == 202 and retries < 5:
+            await asyncio.sleep(2)
+            response = await client.get(url, headers=headers)
+            retries += 1
+        if response.status_code == 200:
+            stats = response.json()
+            # Only include contributors with >0 commits
+            chart_data = [
+                {
+                    "author": c["author"]["login"] if c.get("author") else None,
+                    "total_commits": c.get("total", 0),
+                    "weeks": c.get("weeks", [])
+                }
+                for c in stats if c.get("author") and c.get("total", 0) > 0
+            ]
+            return chart_data
         return []

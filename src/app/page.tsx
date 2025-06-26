@@ -7,6 +7,8 @@ import Spinner from "./components/Spinner";
 import RepoInfo from "./components/RepoInfo";
 import Contributors from "./components/Contributors";
 import Languages from "./components/Languages";
+import ContributorsChart from "./components/ContributorsChart";
+import WallOfFameRepos from "./components/WallOfFamerepos";
 import { fetchRepoInfo, fetchContributors, fetchLanguages } from "./utils/api";
 
 export default function Home() {
@@ -16,6 +18,8 @@ export default function Home() {
   const [languages, setLanguages] = useState<{ [key: string]: number }>({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [owner, setOwner] = useState<string>("");
+  const [repoName, setRepoName] = useState<string>("");
 
   const handleAnalyze = async () => {
     setError("");
@@ -23,17 +27,19 @@ export default function Home() {
     setContributors([]);
     setLanguages({});
     setLoading(true);
-    const [owner, repoName] = input.trim().split("/");
-    if (!owner || !repoName) {
+    const [ownerInput, repoInput] = input.trim().split("/");
+    if (!ownerInput || !repoInput) {
       setError("Please enter a valid repository in owner/repo format, e.g. vercel/next.js");
       setLoading(false);
       return;
     }
     try {
-      const repoData = await fetchRepoInfo(owner, repoName);
+      setOwner(ownerInput);
+      setRepoName(repoInput);
+      const repoData = await fetchRepoInfo(ownerInput, repoInput);
       setRepo(repoData);
-      setContributors(await fetchContributors(owner, repoName));
-      setLanguages(await fetchLanguages(owner, repoName));
+      setContributors(await fetchContributors(ownerInput, repoInput));
+      setLanguages(await fetchLanguages(ownerInput, repoInput));
     } catch (e: any) {
       setError(e.message || "Error fetching data.");
     }
@@ -71,8 +77,13 @@ export default function Home() {
             <RepoInfo repo={repo} />
             <Contributors contributors={contributors} />
             <Languages languages={languages} />
+            <div style={{ width: "100%", marginTop: 32 }}>
+              <ContributorsChart owner={owner} repo={repoName} />
+            </div>
           </div>
         )}
+        {/* -- THE WALL OF FAME IS NOW BELOW THE APP -- */}
+        <WallOfFameRepos refreshInterval={15000} perPage={12} />
       </main>
       <Footer />
     </>
