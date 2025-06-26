@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import repo, contributors
-from backend.routers import popular_repos  # <-- Import the new router
+from backend.routers import repo, contributors, popular_repos  # Import all routers here
 
 app = FastAPI(
     title="GitHub Repo Analyzer Backend",
@@ -21,7 +20,7 @@ app.add_middleware(
 # Include the routers
 app.include_router(repo.router, prefix="/repo", tags=["repo"])
 app.include_router(contributors.router, prefix="/contributors", tags=["contributors"])
-app.include_router(popular_repos.router, prefix="", tags=["popular"])  # <-- Add the popular repos router
+app.include_router(popular_repos.router, prefix="", tags=["popular"])  # Popular repos endpoints
 
 @app.get("/")
 def read_root():

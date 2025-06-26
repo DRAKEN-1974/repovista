@@ -9,6 +9,7 @@ import Contributors from "./components/Contributors";
 import Languages from "./components/Languages";
 import ContributorsChart from "./components/ContributorsChart";
 import WallOfFameRepos from "./components/WallOfFamerepos";
+
 import { fetchRepoInfo, fetchContributors, fetchLanguages } from "./utils/api";
 
 export default function Home() {
