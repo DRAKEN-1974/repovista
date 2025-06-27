@@ -39,13 +39,14 @@ body {
   overflow-x: hidden;
 }
 
-/* Huge "RepoVista" watermark in black outline, Grok-style, white bg */
+/* Smaller "RepoVista" watermark in black outline, Grok-style, white bg */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: url('data:image/svg+xml;utf8,<svg width="1800" height="900" viewBox="0 0 1800 900" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="50%" y="64%" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="380" font-weight="900" fill="none" stroke="%23191919" stroke-width="2.8" opacity="0.13" letter-spacing="-24">RepoVista</text></svg>');
+background: url('data:image/svg+xml;utf8,<svg width="1800" height="900" viewBox="0 0 1800 900" fill="none" xmlns="http://www.w3.org/2000/svg"><text x="50%" y="64%" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="380" font-weight="900" fill="none" stroke="%23191919" stroke-width="2.8" opacity="0.13" letter-spacing="-24">RepoVista</text></svg>');
+
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;

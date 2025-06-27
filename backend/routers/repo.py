@@ -1,35 +1,31 @@
 from fastapi import APIRouter, HTTPException
-from services.github import (
-    fetch_repo_info,
-    fetch_contributors,
-    fetch_languages,
-    fetch_issues,
-)
+from backend.services import github
 
 router = APIRouter()
 
-@router.get("/{owner}/{repo_name}")
-async def get_repo_info(owner: str, repo_name: str):
-    """Fetch basic information about a GitHub repository."""
-    repo_data = await fetch_repo_info(owner, repo_name)
-    if not repo_data:
-        raise HTTPException(status_code=404, detail="Repository not found")
-    return repo_data
+@router.get("/info")
+async def get_repo_info(owner: str, repo: str):
+    data = await github.fetch_repo_info(owner, repo)
+    if not data:
+        raise HTTPException(status_code=404, detail="Repo not found")
+    return data
 
-@router.get("/{owner}/{repo_name}/contributors")
-async def get_repo_contributors(owner: str, repo_name: str):
-    """Fetch contributors for a GitHub repository."""
-    contributors = await fetch_contributors(owner, repo_name)
-    return contributors
+@router.get("/contributors")
+async def get_contributors(owner: str, repo: str):
+    data = await github.fetch_contributors(owner, repo)
+    # Return empty list for zero contributors, don't 404 (lets frontend handle empty state)
+    return data or []
 
-@router.get("/{owner}/{repo_name}/languages")
-async def get_repo_languages(owner: str, repo_name: str):
-    """Fetch programming languages used in a GitHub repository."""
-    languages = await fetch_languages(owner, repo_name)
-    return languages
+@router.get("/languages")
+async def get_languages(owner: str, repo: str):
+    data = await github.fetch_languages(owner, repo)
+    # Return empty dict for zero languages, don't 404 (lets frontend handle empty state)
+    return data or {}
 
-@router.get("/{owner}/{repo_name}/issues")
-async def get_repo_issues(owner: str, repo_name: str, state: str = "open"):
-    """Fetch issues from a GitHub repository."""
-    issues = await fetch_issues(owner, repo_name, state)
-    return issues
+# Optional: support /repo/{owner}/{repo}
+@router.get("/{owner}/{repo}")
+async def get_repo_info_path(owner: str, repo: str):
+    data = await github.fetch_repo_info(owner, repo)
+    if not data:
+        raise HTTPException(status_code=404, detail="Repo not found")
+    return data
